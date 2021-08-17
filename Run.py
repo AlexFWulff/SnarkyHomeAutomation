@@ -2,6 +2,8 @@ from SimpleLogger import SimpleLogger
 from AudioManager import AudioManager
 from DisplayManager import DisplayManager
 from AIManager import AIManager
+from AutomationManager import AutomationManager
+from VoiceOutputManager import VoiceOutputManager
 
 import time
 
@@ -15,6 +17,8 @@ if __name__ == "__main__":
     display_man = DisplayManager(l)
     audio_man = AudioManager(l, config, display_man)
     ai_man = AIManager(l, config, display_man)
+    auto_man = AutomationManager(l, config, display_man)
+    voice_man = VoiceOutputManager(l, config, display_man)
     
     try:
         while True:
@@ -22,7 +26,9 @@ if __name__ == "__main__":
                 transcription = audio_man.output_queue.get()
                 ai_man.handle_command(transcription)
             if not ai_man.result_outputs.empty():
-                print(ai_man.result_outputs.get())
+                command = ai_man.result_outputs.get()
+                auto_man.handle_command(command)
+                voice_man.handle_command(command)
             else:
                 time.sleep(0.01)
                 

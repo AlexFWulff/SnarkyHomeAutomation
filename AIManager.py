@@ -46,6 +46,7 @@ class AIManager:
         else:
             self.display_man.got_ai_result(result)
             self.result_outputs.put(result)
+            self.l.log(f"Response: {result}", "DEBUG")
         
     def parse_prompt1_response(self, response):
         try:

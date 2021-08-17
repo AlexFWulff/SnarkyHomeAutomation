@@ -5,3 +5,10 @@
 * sounddevice
 * simpleaudio
 * pocketsphinx
+
+# Packages I installed
+* pvporcupine
+* SpeechRecognition
+* openai
+* gtts
+* audio2numpy

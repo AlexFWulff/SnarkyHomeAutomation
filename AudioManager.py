@@ -50,7 +50,9 @@ class AudioManager:
             frames_per_buffer=self.frame_len)
         
         while not self.stop_rec:
-            self.current_samps = audio_stream.read(self.porc.frame_length)
+            self.current_samps = \
+                audio_stream.read(self.porc.frame_length,
+                                  exception_on_overflow=False)
             self.samps_stale = False
 
         audio_stream.stop_stream()
