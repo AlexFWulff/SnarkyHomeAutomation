@@ -14,7 +14,7 @@ if __name__ == "__main__":
     if l is None:
         exit()
 
-    display_man = DisplayManager(l)
+    display_man = DisplayManager(l, config)
     audio_man = AudioManager(l, config, display_man)
     ai_man = AIManager(l, config, display_man)
     auto_man = AutomationManager(l, config, display_man)
@@ -30,6 +30,7 @@ if __name__ == "__main__":
                 auto_man.handle_command(command)
                 voice_man.handle_command(command)
             else:
+                display_man.handle_gui_events()
                 time.sleep(0.01)
                 
     except KeyboardInterrupt:
