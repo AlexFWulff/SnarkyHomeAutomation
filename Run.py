@@ -5,20 +5,24 @@ from AIManager import AIManager
 from AutomationManager import AutomationManager
 from VoiceOutputManager import VoiceOutputManager
 
+import configparser
+
 import time
 
 if __name__ == "__main__":
-    config = "config.ini"
+    config_file = "config.ini"
+    config = configparser.ConfigParser()
+    config.read(config_file)
     
     l = SimpleLogger("DEBUG")
     if l is None:
         exit()
 
-    display_man = DisplayManager(l, config)
-    audio_man = AudioManager(l, config, display_man)
-    ai_man = AIManager(l, config, display_man)
-    auto_man = AutomationManager(l, config, display_man)
-    voice_man = VoiceOutputManager(l, config, display_man)
+    display_man = DisplayManager(l, config_file)
+    audio_man = AudioManager(l, config_file, display_man)
+    ai_man = AIManager(l, config_file, display_man)
+    auto_man = AutomationManager(l, config_file, display_man)
+    voice_man = VoiceOutputManager(l, config_file, display_man)
     
     try:
         while True:
@@ -30,7 +34,8 @@ if __name__ == "__main__":
                 auto_man.handle_command(command)
                 voice_man.handle_command(command)
             else:
-                display_man.handle_gui_events()
+                if config["Display"]["use_display"] == "True":
+                    display_man.handle_gui_events()
                 time.sleep(0.01)
                 
     except KeyboardInterrupt:

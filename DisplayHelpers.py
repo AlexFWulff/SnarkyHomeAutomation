@@ -148,7 +148,7 @@ def draw_active_screen(root, input_txt, response_txt, action_txt,
         action_label = tk.Label(
             root,
             text = action_txt,
-            font=("Arial", 20),
+            font=("Arial", 30),
             wraplength=label_w, justify="center",
             bg=main_background_color, fg="white")
         action_label.place(x=label_x,

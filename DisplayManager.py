@@ -80,12 +80,15 @@ class DisplayManager:
             self.action_label = ac_lab
 
         if self.state == self.states[7]:
-            self.input_label.place_forget()
-            self.input_label = None
-            self.response_label.place_forget()
-            self.response_label = None
-            self.action_label.place_forget()
-            self.action_label = None
+            if self.input_label is not None:
+                self.input_label.place_forget()
+                self.input_label = None
+            if self.response_label is not None:
+                self.response_label.place_forget()
+                self.response_label = None
+            if self.action_label is not None:
+                self.action_label.place_forget()
+                self.action_label = None
             
             self.title_label.config(fg = "white")
             self.state = self.states[0]
@@ -96,7 +99,6 @@ class DisplayManager:
     def parse_config(self):
         self.w = int(self.config["Display"]["w"])
         self.h = int(self.config["Display"]["h"])
-        self.theme = self.config["Display"]["theme"]
         
     def wakeword_detected(self):
         if self.state != self.states[0]:
@@ -125,17 +127,22 @@ class DisplayManager:
             self.l.log("Invalid state transition for finished",
                        "DEBUG")
             return
-        
-        self.transition_state = {}
-        self.state = self.states[4]
-        self.input_txt = text
-        self.response_txt = ""
-        self.action_txt = ""
+
+        if text == "":
+            self.state = self.states[7]
+        else:
+            self.transition_state = {}
+            self.state = self.states[4]
+            self.input_txt = text
+            self.response_txt = ""
+            self.action_txt = ""
     
     def got_ai_result(self, result):
         self.state = self.states[6]
         self.response_txt = result["quip"]
-        self.action_txt = "Bla example"
+        obj = result["object"]
+        state = result["state"]
+        self.action_txt = f"Setting '{obj}' to {state}"
 
     def output_speaking_finished(self):
         if self.state != self.states[6]:
@@ -144,6 +151,5 @@ class DisplayManager:
             return
         self.state = self.states[7]
 
-        
     def ai_result_failed(self, response):
-        pass
+        self.state = self.states[7]

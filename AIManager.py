@@ -59,22 +59,31 @@ class AIManager:
                 self.l.log(f"Bad response text: {response}", "RUN")
                 raise ValueError
 
+            # Sometimes this can help it if it's slightly wrong
+            if text[-1] != "\n": text = text+"\n"
+            
             # Response looks halfway decent; let's parse
             result = {}
             result["prompt_name"] = self.prompt_name
             result["object"] = self.between_strings(" ", "\n", text)
             result["state"] = \
-                int(self.between_strings("\nDesired State: ", "\n", text))
-            result["quip"] = self.between_strings("\nResponse: ", "\n", text)
+                self.between_strings("\nDesired State: ", "\n", text)
+            result["quip"] = \
+                self.between_strings("\nResponse: ", "\n", text)
             return result
                 
         except KeyError:
-            self.l.log(f"KeyError in Prompt Response {response}", "RUN")
+            self.l.log(f"KeyError in Response",
+                       "DEBUG")
         except AttributeError:
-            self.l.log(f"Something went wrong parsing {response}", "RUN")
+            self.l.log(f"AttributeError in Response",
+                       "DEBUG")
         except ValueError:
-            pass
+            self.l.log(f"ValueError in Response",
+                       "DEBUG")
 
+        self.l.log(f"Error parsing response: {response}",
+                   "RUN")
         self.display_man.ai_result_failed(response)
         return None
             
