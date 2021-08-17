@@ -12,3 +12,9 @@
 * openai
 * gtts
 * audio2numpy
+* pyaudio
+* simpleaudio
+
+# RPI Setup
+First error was ImportError: libportaudio.so.2: cannot open shared object file: No such file or directory
+So, I installed libportaudio2 via apt

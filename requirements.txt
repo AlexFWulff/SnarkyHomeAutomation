@@ -1,0 +1,7 @@
+pvporcupine
+SpeechRecognition
+openai
+gtts
+audio2numpy
+pyaudio
+simpleaudio
