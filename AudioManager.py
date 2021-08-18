@@ -32,8 +32,9 @@ class AudioManager:
         sample_thread = Thread(target = self.sample_loop)
         sample_thread.start()
         
-        # Baseline audio level for a second
+        # Let things settle then baseline audio level for a bit
         baseline_samps = int(self.initial_thresh_time*self.fs)
+        time.sleep(0.5)
         samps = self.get_samps(baseline_samps)
         self.base_level = self.rms(samps)
         self.l.log(f"Base RMS Level: {self.base_level}", "DEBUG")
@@ -82,7 +83,6 @@ class AudioManager:
                 still_quiet = True
                 while True:
                     samps = self.get_samps(current_nsamp)
-                    
                     if self.rms(samps) < self.dev_thresh*self.base_level \
                        and still_quiet:
                         continue
@@ -142,7 +142,9 @@ class AudioManager:
         return all_vals
     
     def rms(self, samps):
-        return np.sqrt(np.mean(samps**2))
+        # We're using 16-bit integers, so want to cast to 64-bit before rms
+        larger = np.array(samps, dtype=np.int64)
+        return np.sqrt(np.mean(larger**2))
 
     def parse_config(self):
         self.transcription_buffer_time = \

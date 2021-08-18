@@ -12,7 +12,8 @@ rms_deviation_thresh = 1.5
 initial_thresh_time = 0.5
 
 def rms(samps):
-    return np.sqrt(np.mean(samps**2))
+    larger = np.array(samps, dtype=np.int64)
+    return np.sqrt(np.mean(larger**2))
 
 def run():
     porc = pvporcupine.create(keywords=["computer"])

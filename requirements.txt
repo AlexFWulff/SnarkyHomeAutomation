@@ -5,3 +5,5 @@ gtts
 audio2numpy
 pyaudio
 simpleaudio
+PySimpleGUI
+scipy
