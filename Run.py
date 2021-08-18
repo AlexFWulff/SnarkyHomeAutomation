@@ -4,6 +4,7 @@ from DisplayManager import DisplayManager
 from AIManager import AIManager
 from AutomationManager import AutomationManager
 from VoiceOutputManager import VoiceOutputManager
+from SoundManager import SoundManager
 
 import configparser
 
@@ -19,8 +20,9 @@ if __name__ == "__main__":
         exit()
 
     display_man = DisplayManager(l, config_file)
-    audio_man = AudioManager(l, config_file, display_man)
-    ai_man = AIManager(l, config_file, display_man)
+    sound_man = SoundManager(l, config_file)
+    audio_man = AudioManager(l, config_file, display_man, sound_man)
+    ai_man = AIManager(l, config_file, display_man, sound_man)
     auto_man = AutomationManager(l, config_file, display_man)
     voice_man = VoiceOutputManager(l, config_file, display_man)
     

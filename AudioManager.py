@@ -18,7 +18,7 @@ class AudioManager:
 
     output_queue = Queue()
 
-    def __init__(self, logger, config_file, display_man):
+    def __init__(self, logger, config_file, display_man, sound_man):
         self.porc = pvporcupine.create(keywords=["computer"])
         self.fs = self.porc.sample_rate
         self.frame_len = self.porc.frame_length
@@ -27,6 +27,7 @@ class AudioManager:
         self.config.read(config_file)
         self.parse_config()
         self.display_man = display_man
+        self.sound_man = sound_man
         
         sample_thread = Thread(target = self.sample_loop)
         sample_thread.start()
@@ -62,7 +63,9 @@ class AudioManager:
     def run(self):
         r = sr.Recognizer()
         self.l.log("Started to listen...", "RUN")
+        wait_speech_nsamp = int(self.fs*self.wait_speech_buffer_time)
         transcription_nsamp = int(self.fs*self.transcription_buffer_time)
+        current_nsamp = wait_speech_nsamp
         
         while not self.stop_rec:
             samps = self.get_samps_single()
@@ -72,18 +75,23 @@ class AudioManager:
             if keyword_index >= 0:
                 self.display_man.wakeword_detected()
                 self.l.log("Wakeword Detected. Waiting for speech.", "RUN")
+                self.sound_man.play_blocking("wakeword")
+                
                 # Continuously read samples until RMS value goes to baseline
                 to_transcribe = []
                 still_quiet = True
                 while True:
-                    samps = self.get_samps(transcription_nsamp)
+                    samps = self.get_samps(current_nsamp)
+                    
                     if self.rms(samps) < self.dev_thresh*self.base_level \
                        and still_quiet:
                         continue
                     elif self.rms(samps) < self.dev_thresh*self.base_level:
+                        current_nsamp = wait_speech_nsamp
                         break
     
                     if still_quiet:
+                        current_nsamp = transcription_nsamp
                         self.display_man.talking_started()
                         self.l.log("You started talking!", "DEBUG")
                         still_quiet = False
@@ -98,11 +106,13 @@ class AudioManager:
                 try:
                     transcription = r.recognize_google(audio)
                     self.l.log(f"You said: {transcription}", "RUN")
-                    self.display_man.transcription_finished(transcription)
                     self.output_queue.put(transcription)
+                    self.display_man.transcription_finished(transcription)
+                    self.sound_man.play_blocking("transcription success")
                 except sr.UnknownValueError:
                     self.l.log("No audio found in segment", "DEBUG")
                     self.display_man.transcription_finished("")
+                    self.sound_man.play_blocking("transcription failed")
                 
             else:
                 # Eventually implement continuous RMS updating here
@@ -135,7 +145,11 @@ class AudioManager:
         return np.sqrt(np.mean(samps**2))
 
     def parse_config(self):
-        self.transcription_buffer_time = float(self.config["Audio"]["transcription_buffer_time"])
+        self.transcription_buffer_time = \
+            float(self.config["Audio"]["transcription_buffer_time"])
+        self.wait_speech_buffer_time = \
+            float(self.config["Audio"]["wait_speech_buffer_time"])
         self.dev_thresh = float(self.config["Audio"]["rms_deviation_thresh"])
-        self.initial_thresh_time = float(self.config["Audio"]["initial_thresh_time"])
+        self.initial_thresh_time = \
+            float(self.config["Audio"]["initial_thresh_time"])
 

@@ -9,7 +9,7 @@ class DisplayManager:
     stop_rec = False
     states = ["waiting", "waiting for talking", "talking started",
               "talking finished", "transit to started", "started",
-              "got response", "finished talking"]
+              "got response", "finished output speech"]
     last_start_update_time = 0
     transition_state = {}
     input_label = None
@@ -26,7 +26,8 @@ class DisplayManager:
         
     def start_window(self):
         self.root = tk.Tk()
-        self.root.title("A simple GUI")
+        self.root.title("Snarky AI")
+        #self.root.wm_attributes('-fullscreen','true')
         self.root.minsize(width=self.w, height=self.h)
 
         self.start_window_frames, self.title_label =\

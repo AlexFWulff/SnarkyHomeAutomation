@@ -7,12 +7,13 @@ from threading import Thread
 
 class AIManager:
     l = None
-    def __init__(self, logger, config_file, display_man):
+    def __init__(self, logger, config_file, display_man, sound_man):
         self.l = logger
         self.config = configparser.ConfigParser()
         self.config.read(config_file)
         self.parse_config()
         self.display_man = display_man
+        self.sound_man = sound_man
         self.result_outputs = Queue()
 
     def handle_command(self, text):
@@ -42,7 +43,7 @@ class AIManager:
             result = self.parse_prompt1_response(response)
 
         if result is None:
-            pass
+            self.sound_man.play_blocking("ai failed")
         else:
             self.display_man.got_ai_result(result)
             self.result_outputs.put(result)
