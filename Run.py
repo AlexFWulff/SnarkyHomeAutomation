@@ -6,14 +6,10 @@ from AutomationManager import AutomationManager
 from VoiceOutputManager import VoiceOutputManager
 from SoundManager import SoundManager
 
-import configparser
-
 import time
 
 if __name__ == "__main__":
     config_file = "config.ini"
-    config = configparser.ConfigParser()
-    config.read(config_file)
     
     l = SimpleLogger("DEBUG")
     if l is None:
