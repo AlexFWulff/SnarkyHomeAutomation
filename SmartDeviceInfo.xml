@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<devices>
+  <device>
+    <type>LIFX</type>
+    <name>bedroom lamp</name>
+    <MAC>d0:73:d5:64:ce:64</MAC>
+  </device>
+
+  <device>
+    <type>LIFX</type>
+    <name>kitchen</name>
+    <MAC>d0:73:d5:64:ce:64</MAC>
+  </device>
+</devices>
+    

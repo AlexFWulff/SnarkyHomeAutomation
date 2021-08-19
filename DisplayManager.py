@@ -27,7 +27,8 @@ class DisplayManager:
     def start_window(self):
         self.root = tk.Tk()
         self.root.title("Snarky AI")
-        #self.root.wm_attributes('-fullscreen','true')
+        self.root.attributes("-fullscreen", True)
+        
         self.root.minsize(width=self.w, height=self.h)
 
         self.start_window_frames, self.title_label =\

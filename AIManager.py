@@ -66,9 +66,9 @@ class AIManager:
             # Response looks halfway decent; let's parse
             result = {}
             result["prompt_name"] = self.prompt_name
-            result["object"] = self.between_strings(" ", "\n", text)
+            result["object"] = self.between_strings(" ", "\n", text).lower()
             result["state"] = \
-                self.between_strings("\nDesired State: ", "\n", text)
+                self.between_strings("\nDesired State: ", "\n", text).lower()
             result["quip"] = \
                 self.between_strings("\nResponse: ", "\n", text)
             return result
