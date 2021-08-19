@@ -7,6 +7,7 @@ import time
 class DisplayManager:
     l = None
     stop_rec = False
+    # All actions are organized into various states
     states = ["waiting", "waiting for talking", "talking started",
               "talking finished", "transit to started", "started",
               "got response", "finished output speech"]
@@ -27,6 +28,7 @@ class DisplayManager:
     def start_window(self):
         self.root = tk.Tk()
         self.root.title("Snarky AI")
+        # Comment out this line to make the display windowed
         self.root.attributes("-fullscreen", True)
         
         self.root.minsize(width=self.w, height=self.h)
@@ -38,6 +40,7 @@ class DisplayManager:
         self.state = self.states[0]
 
     def handle_gui_events(self):
+        # Cause main thread updates as needed
         state_idx = self.states.index(self.state)
         if self.state == self.states[0] or \
            self.state == self.states[1] or \

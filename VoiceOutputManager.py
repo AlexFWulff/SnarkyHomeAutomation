@@ -28,7 +28,10 @@ class VoiceOutputManager:
         x, fs = a2n.audio_from_file("/tmp/tempvoice.mp3")
 
         # Unfortunately the speaker on my RPi cannot play at 24kHz,
-        # so the entire Scipy package is required to resample down to 16 kHz
+        # so the entire Scipy package is required to resample down to 16 kHz.
+        # You can shrink the total size needed by removing these lines and
+        # just playing the original audio if your speaker supports it, and
+        # you can remove the scipy dependency.
         desired_fs = 16000
         fs_ratio = desired_fs/fs
         desired_nsamp = int(len(x)*fs_ratio)

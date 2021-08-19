@@ -16,6 +16,8 @@ class AIManager:
         self.sound_man = sound_man
         self.result_outputs = Queue()
 
+    # This is called from the main thread, so we want to pass it off
+    # to a separate thread to not hang the program
     def handle_command(self, text):
         async_thread = Thread(target = self.handle_command_async,
                               args=(text,))
@@ -24,6 +26,7 @@ class AIManager:
     def handle_command_async(self, text):
         prompt = self.prompt_text
 
+        # Could add separate handlers for different prompts if desired...
         if self.prompt_name == "prompt1":
             prompt = prompt+text+"\n"+"Object:"
 
@@ -48,8 +51,11 @@ class AIManager:
             self.display_man.got_ai_result(result)
             self.result_outputs.put(result)
             self.l.log(f"Response: {result}", "DEBUG")
-        
+
     def parse_prompt1_response(self, response):
+        # There's lots of weird stuff that GPT-3 could return, so
+        # we'll try and filter out as many of these errors as possible
+        # before attempting to parse the command
         try:
             reason = response["choices"][0]["finish_reason"]
             text = response["choices"][0]["text"]
@@ -103,11 +109,13 @@ class AIManager:
         self.stop_token = self.config[prompt_name]["stop_token"]
         self.prompt_name = prompt_name
 
+        # You'll get an error here if the key file doesn't exist
         f = open(self.config["AI"]["key_path"], "r")
         key_text = f.read()
         if key_text[-1] == "\n": key_text = key_text[:-1]
         openai.api_key = key_text
 
+    # Get text between two strings
     def between_strings(self, start, end, text):
         search_re = start+"(.*)"+end
         return re.search(search_re, text).group(1)

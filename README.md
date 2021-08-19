@@ -1,8 +1,6 @@
 # Snarky AI - The Meanest Voice Assistant
 [![YouTube banner](https://img.youtube.com/vi/p1eTp-xPUeU/mqdefault.jpg)](https://youtu.be/p1eTp-xPUeU)
 
-https://img.youtube.com/vi/p1eTp-xPUeU/mqdefault.jpg
-
 Create an extremely snarky GPT-3-powered voice assistant to turn on and off your smart home devices. Build instructions are [here](https://www.hackster.io/AlexWulff/the-meanest-home-automation-ai-with-gpt-3-859116).
 
 This code is currently only compatible with LIFX smart bulbs, but it should be a piece of cake to extend this to handle any other smart device that has a Python API.

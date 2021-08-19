@@ -19,6 +19,7 @@ class AudioManager:
     output_queue = Queue()
 
     def __init__(self, logger, config_file, display_man, sound_man):
+        # Porcupine handles the wakewords
         self.porc = pvporcupine.create(keywords=["computer"])
         self.fs = self.porc.sample_rate
         self.frame_len = self.porc.frame_length
@@ -29,6 +30,8 @@ class AudioManager:
         self.display_man = display_man
         self.sound_man = sound_man
         
+        # Continuously collect samples in a separate thread, and make sure
+        # they're always fresh before delivering them
         sample_thread = Thread(target = self.sample_loop)
         sample_thread.start()
         
@@ -39,6 +42,7 @@ class AudioManager:
         self.base_level = self.rms(samps)
         self.l.log(f"Base RMS Level: {self.base_level}", "DEBUG")
 
+        # Continuously wait for wakeword in this thread
         run_thread = Thread(target = self.run)
         run_thread.start()
         
@@ -72,7 +76,8 @@ class AudioManager:
             samps = self.get_samps_single()
             pcm = struct.unpack_from("h" * self.porc.frame_length, samps)
             keyword_index = self.porc.process(pcm)
-            
+
+            # If the wakeword was detected...
             if keyword_index >= 0:
                 self.display_man.wakeword_detected()
                 self.l.log("Wakeword Detected. Waiting for speech.", "RUN")
@@ -142,7 +147,9 @@ class AudioManager:
         return all_vals
     
     def rms(self, samps):
-        # We're using 16-bit integers, so want to cast to 64-bit before rms
+        # We're using 16-bit integers, so want to cast to 64-bit before rms.
+        # This caused me lots of headaches before realizing that the values
+        # were overflowing...
         larger = np.array(samps, dtype=np.int64)
         return np.sqrt(np.mean(larger**2))
 
