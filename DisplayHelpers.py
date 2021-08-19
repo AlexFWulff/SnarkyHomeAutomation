@@ -10,7 +10,7 @@ label_frame_h_pct = 0.2
 color_change_step_time = 0.1
 transition_step_time = color_change_step_time/4
 main_background_color = "#141414"
-state_texts = ["Waiting for command...", "Listening...",
+state_texts = ["Waiting...", "Listening...",
                "Keep talking...", "Transcribing..."]
 
 label_w_pct = 0.9
@@ -46,7 +46,7 @@ def make_start_window(root, w, h):
         window_frames.append(frame)
 
     title_label = tk.Label(root,
-                           text = "Waiting for command...",
+                           text = state_texts[0],
                            font=("Arial 35 bold"),
                            bg=main_background_color, fg="white")
     title_label.place(x=int(frame_x_vals[-1]),
@@ -123,7 +123,7 @@ def draw_active_screen(root, input_txt, response_txt, action_txt,
         input_label = tk.Label(
             root,
             text = input_txt,
-            font=("Arial 40 bold"),
+            font=("Arial 35 bold"),
             wraplength=label_w, justify="center",
             bg=main_background_color, fg="white")
         
@@ -136,7 +136,7 @@ def draw_active_screen(root, input_txt, response_txt, action_txt,
         response_label = tk.Label(
             root,
             text = response_txt,
-            font=("Arial 40 bold"),
+            font=("Arial 35 bold"),
             wraplength=label_w, justify="center",
             bg=main_background_color, fg="#44ABFF")
         response_label.place(x=label_x,
