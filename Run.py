@@ -5,6 +5,7 @@ from AIManager import AIManager
 from AutomationManager import AutomationManager
 from VoiceOutputManager import VoiceOutputManager
 from SoundManager import SoundManager
+from WakewordDetector import WakewordDetector
 
 import configparser
 
@@ -19,18 +20,12 @@ if __name__ == "__main__":
     if l is None:
         exit()
 
-    # Manages the display. All modules call various event functions to
-    # make different things happen on the display
     display_man = DisplayManager(l, config_file)
-    # Plays various beeps and boops in response to events
     sound_man = SoundManager(l, config_file)
-    # Waits for a wakeword, collects the user's voice, and transcribes it
-    audio_man = AudioManager(l, config_file, display_man, sound_man)
-    # Passes transcribed audio to GPT-3, and parses the response
+    wakeword_man = WakewordDetector(l, config_file, display_man)
+    audio_man = AudioManager(l, config_file, display_man, sound_man, wakeword_man)
     ai_man = AIManager(l, config_file, display_man, sound_man)
-    # Handles home automation tasks request by AIManager
     auto_man = AutomationManager(l, config_file, display_man)
-    # Speaks the output from GPT-3
     voice_man = VoiceOutputManager(l, config_file, display_man)
     
     try:
@@ -54,3 +49,4 @@ if __name__ == "__main__":
         # AudioManager is the only module with a separate loop that needs
         # to stop in order to have a clean exit
         audio_man.stop()
+        wake_man.stop()

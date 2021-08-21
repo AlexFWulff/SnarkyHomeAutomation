@@ -9,3 +9,5 @@ scipy
 lifxlan
 xmltodict
 textdistance
+tensorflow
+pillow

@@ -6,7 +6,7 @@ import struct
 from threading import Thread
 import time
 import configparser
-from queue import Queue
+from queue import Queue, Empty
 
 class AudioManager:
     l = None
@@ -16,29 +16,39 @@ class AudioManager:
     samps_stale = True
     current_samps = None
 
+    wakeword_detected = False
+    
     output_queue = Queue()
 
-    def __init__(self, logger, config_file, display_man, sound_man):
-        # Porcupine handles the wakewords
-        self.porc = pvporcupine.create(keywords=["computer"])
-        self.fs = self.porc.sample_rate
-        self.frame_len = self.porc.frame_length
+    def __init__(self, logger, config_file, display_man, sound_man, wake_man):        
         self.l = logger
         self.config = configparser.ConfigParser()
         self.config.read(config_file)
         self.parse_config()
         self.display_man = display_man
         self.sound_man = sound_man
+
+        self.wake_man = wake_man
+        self.fs = self.wake_man.fs
+        self.refresh_nsamp = int(self.buf_refresh_time*self.fs)
         
-        # Continuously collect samples in a separate thread, and make sure
-        # they're always fresh before delivering them
-        sample_thread = Thread(target = self.sample_loop)
+        pa = pyaudio.PyAudio()
+        self.audio_stream = pa.open(
+            rate=self.fs,
+            channels=1,
+            format=pyaudio.paInt16,
+            input=True,
+            frames_per_buffer=self.refresh_nsamp
+        )
+        
+        sample_thread = Thread(target = self.feed_wakeword)
         sample_thread.start()
         
         # Let things settle then baseline audio level for a bit
         baseline_samps = int(self.initial_thresh_time*self.fs)
-        time.sleep(0.5)
-        samps = self.get_samps(baseline_samps)
+        samps = self.audio_stream.read(baseline_samps,
+                                       exception_on_overflow=False)
+        samps = np.frombuffer(samps, dtype=np.int16)
         self.base_level = self.rms(samps)
         self.l.log(f"Base RMS Level: {self.base_level}", "DEBUG")
 
@@ -46,24 +56,33 @@ class AudioManager:
         run_thread = Thread(target = self.run)
         run_thread.start()
         
-    def sample_loop(self):
-        pa = pyaudio.PyAudio()
-        audio_stream = pa.open(
-            rate=self.fs,
-            channels=1,
-            format=pyaudio.paInt16,
-            input=True,
-            frames_per_buffer=self.frame_len)
+    def feed_wakeword(self):
+        cur_samps = np.random.normal(0,1000,self.wake_man.nsamp)
+        nsamp = self.wake_man.nsamp
         
         while not self.stop_rec:
-            self.current_samps = \
-                audio_stream.read(self.porc.frame_length,
-                                  exception_on_overflow=False)
-            self.samps_stale = False
+            if self.wakeword_detected:
+                try: self.wake_man.output_queue.get_nowait()
+                except Empty: pass
+                cur_samps = np.random.normal(0,1000,self.wake_man.nsamp)
+                time.sleep(0.1)
+                continue
 
-        audio_stream.stop_stream()
-        audio_stream.close()
-        pa.terminate()
+            try:
+                self.wake_man.output_queue.get_nowait()
+                self.wakeword_detected = True
+            except Empty:
+                pass
+            
+            samps = self.audio_stream.read(self.refresh_nsamp,
+                                           exception_on_overflow=False)
+            samps = np.frombuffer(samps, dtype=np.int16)
+            cur_samps[:nsamp-self.refresh_nsamp] = cur_samps[self.refresh_nsamp:]
+            cur_samps[nsamp-self.refresh_nsamp:] = samps
+            self.wake_man.input_queue.put(np.array(cur_samps))
+
+        self.audio_stream.stop_stream()
+        self.audio_stream.close()
 
     def run(self):
         r = sr.Recognizer()
@@ -73,12 +92,8 @@ class AudioManager:
         current_nsamp = wait_speech_nsamp
         
         while not self.stop_rec:
-            samps = self.get_samps_single()
-            pcm = struct.unpack_from("h" * self.porc.frame_length, samps)
-            keyword_index = self.porc.process(pcm)
-
             # If the wakeword was detected...
-            if keyword_index >= 0:
+            if self.wakeword_detected:
                 self.display_man.wakeword_detected()
                 self.l.log("Wakeword Detected. Waiting for speech.", "RUN")
                 self.sound_man.play_blocking("wakeword")
@@ -87,7 +102,10 @@ class AudioManager:
                 to_transcribe = []
                 still_quiet = True
                 while True:
-                    samps = self.get_samps(current_nsamp)
+                    samps = self.audio_stream.read(current_nsamp,
+                                              exception_on_overflow=False)
+                    samps = np.frombuffer(samps, dtype=np.int16)
+                    
                     if self.rms(samps) < self.dev_thresh*self.base_level \
                        and still_quiet:
                         continue
@@ -119,32 +137,14 @@ class AudioManager:
                     self.display_man.transcription_finished("")
                     self.sound_man.play_blocking("transcription failed")
                 
+                self.wakeword_detected = False
             else:
+                time.sleep(0.01)
                 # Eventually implement continuous RMS updating here
                 # with a list of past RMS values that gets averaged
-                pass
 
     def stop(self):
         self.stop_rec = True
-
-    def get_samps_single(self):
-        while self.samps_stale:
-            time.sleep(0.001)
-        self.samps_stale = True
-        return self.current_samps
-
-    # Returns at least nsamp samps
-    def get_samps(self,nsamp):
-        all_vals = []
-        total = 0
-        while total < nsamp:
-            samps = self.get_samps_single()
-            samps = np.frombuffer(samps, dtype=np.int16)
-            all_vals.append(samps)
-            total = total+samps.size
-
-        all_vals = np.hstack(all_vals)
-        return all_vals
     
     def rms(self, samps):
         # We're using 16-bit integers, so want to cast to 64-bit before rms.
@@ -161,4 +161,6 @@ class AudioManager:
         self.dev_thresh = float(self.config["Audio"]["rms_deviation_thresh"])
         self.initial_thresh_time = \
             float(self.config["Audio"]["initial_thresh_time"])
+        self.buf_refresh_time = \
+            float(self.config["Audio"]["buf_refresh_time"])
 

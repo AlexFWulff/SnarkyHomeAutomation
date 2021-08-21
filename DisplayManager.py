@@ -104,8 +104,10 @@ class DisplayManager:
     def parse_config(self):
         self.w = int(self.config["Display"]["w"])
         self.h = int(self.config["Display"]["h"])
+        self.use_display = self.config["Display"]["use_display"]==True
         
     def wakeword_detected(self):
+        if not self.use_display: return
         if self.state != self.states[0]:
             self.l.log("Invalid state transition for wakeword",
                        "DEBUG")
@@ -113,6 +115,7 @@ class DisplayManager:
         self.state = self.states[1]
 
     def talking_started(self):
+        if not self.use_display: return
         if self.state != self.states[1]:
             self.l.log("Invalid state transition for start talking",
                        "DEBUG")
@@ -120,6 +123,7 @@ class DisplayManager:
         self.state = self.states[2]
 
     def talking_finished(self):
+        if not self.use_display: return
         if self.state != self.states[2]:
             self.l.log(
                 "Invalid state transition for talking finished",
@@ -128,6 +132,7 @@ class DisplayManager:
         self.state = self.states[3]
     
     def transcription_finished(self, text):
+        if not self.use_display: return
         if self.state != self.states[3]:
             self.l.log("Invalid state transition for finished",
                        "DEBUG")
@@ -143,6 +148,7 @@ class DisplayManager:
             self.action_txt = ""
     
     def got_ai_result(self, result):
+        if not self.use_display: return
         self.state = self.states[6]
         self.response_txt = result["quip"]
         obj = result["object"]
@@ -150,6 +156,7 @@ class DisplayManager:
         self.action_txt = f"Setting '{obj}' to {state}"
 
     def output_speaking_finished(self):
+        if not self.use_display: return
         if self.state != self.states[6]:
             self.l.log("Invalid state transition for speaking done",
                        "DEBUG")
@@ -157,4 +164,5 @@ class DisplayManager:
         self.state = self.states[7]
 
     def ai_result_failed(self, response):
+        if not self.use_display: return
         self.state = self.states[7]
