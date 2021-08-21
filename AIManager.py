@@ -77,6 +77,10 @@ class AIManager:
                 self.between_strings("\nDesired State: ", "\n", text).lower()
             result["quip"] = \
                 self.between_strings("\nResponse: ", "\n", text)
+
+            if result["quip"] == "":
+                raise ValueError
+            
             return result
                 
         except KeyError:

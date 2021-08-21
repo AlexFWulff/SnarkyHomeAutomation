@@ -25,7 +25,6 @@ class WakewordDetector:
         process_thread.start()
 
     def parse_config(self):
-        self.model = tf.keras.models.load_model(self.config["Wakeword"]["model_path"])
         self.cooldown_time = float(self.config["Wakeword"]["cooldown_time"])
         self.fs = int(self.config["Wakeword"]["fs"])
         self.sample_len = float(self.config["Wakeword"]["sample_len"])
@@ -39,6 +38,10 @@ class WakewordDetector:
         self.stop_rec = True
 
     def process_loop(self):
+        model = tf.keras.models.load_model(self.config["Wakeword"]["model_path"])
+        self.l.log("Listening for wakewords", "RUN")
+
+        
         while not self.stop_rec:
             try:
                 to_process = self.input_queue.get(timeout=0.1)
@@ -56,7 +59,7 @@ class WakewordDetector:
             resized = (resized-np.min(resized))/(np.max(resized)-np.min(resized))*2-1
             resized = np.expand_dims(resized, axis=2)
             resized = np.expand_dims(resized, axis=0)
-            output = self.model.predict(resized)
+            output = model.predict(resized)
 
             if output[0][0] > self.detect_thresh and \
                time.time()-self.last_detect_time > self.cooldown_time:

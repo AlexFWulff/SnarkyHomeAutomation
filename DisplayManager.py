@@ -23,9 +23,13 @@ class DisplayManager:
         self.config.read(config_file)
         self.parse_config()
 
-        self.start_window()
+        if self.use_display:
+            self.start_window()
+        else:
+            print("NO DISPLAY USING")
         
     def start_window(self):
+        self.state = self.states[0]
         self.root = tk.Tk()
         self.root.title("Snarky AI")
         # Comment out this line to make the display windowed
@@ -36,9 +40,8 @@ class DisplayManager:
         self.start_window_frames, self.title_label =\
             DisplayHelpers.make_start_window(self.root,
                                              self.w, self.h)
-
         self.state = self.states[0]
-
+        
     def handle_gui_events(self):
         # Cause main thread updates as needed
         state_idx = self.states.index(self.state)
@@ -104,7 +107,8 @@ class DisplayManager:
     def parse_config(self):
         self.w = int(self.config["Display"]["w"])
         self.h = int(self.config["Display"]["h"])
-        self.use_display = self.config["Display"]["use_display"]==True
+
+        self.use_display = self.config["Display"]["use_display"]=="True"
         
     def wakeword_detected(self):
         if not self.use_display: return

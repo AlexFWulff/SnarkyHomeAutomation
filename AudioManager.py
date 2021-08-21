@@ -40,17 +40,19 @@ class AudioManager:
             input=True,
             frames_per_buffer=self.refresh_nsamp
         )
-        
-        sample_thread = Thread(target = self.feed_wakeword)
-        sample_thread.start()
-        
-        # Let things settle then baseline audio level for a bit
+
+        # let audio settle then baseline audio level for a bit
+        self.audio_stream.read(int(self.fs/2),
+                               exception_on_overflow=False)
         baseline_samps = int(self.initial_thresh_time*self.fs)
         samps = self.audio_stream.read(baseline_samps,
                                        exception_on_overflow=False)
         samps = np.frombuffer(samps, dtype=np.int16)
         self.base_level = self.rms(samps)
         self.l.log(f"Base RMS Level: {self.base_level}", "DEBUG")
+        
+        sample_thread = Thread(target = self.feed_wakeword)
+        sample_thread.start()
 
         # Continuously wait for wakeword in this thread
         run_thread = Thread(target = self.run)
@@ -86,7 +88,7 @@ class AudioManager:
 
     def run(self):
         r = sr.Recognizer()
-        self.l.log("Started to listen...", "RUN")
+
         wait_speech_nsamp = int(self.fs*self.wait_speech_buffer_time)
         transcription_nsamp = int(self.fs*self.transcription_buffer_time)
         current_nsamp = wait_speech_nsamp
